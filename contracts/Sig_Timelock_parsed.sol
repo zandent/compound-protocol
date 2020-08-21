@@ -7,6 +7,7 @@ contract Timelock {
 
     event NewAdmin(address indexed newAdmin);
     event NewPendingAdmin(address indexed newPendingAdmin);
+    event NewDelay(uint indexed newDelay);
     event CancelTransaction(bytes32 indexed txHash, address indexed target, uint value, string signature,  bytes data, uint user_delay);
     event ExecuteTransaction(bytes32 indexed txHash, address indexed target, uint value, string signature,  bytes data, uint user_delay);
     event QueueTransaction(bytes32 indexed txHash, address indexed target, uint value, string signature, bytes data, uint user_delay);
@@ -81,6 +82,15 @@ contract Timelock {
 
     fallback() external payable { }
 
+    function setDelay(uint delay_) public {
+        require(msg.sender == address(this), "Timelock::setDelay: Call must come from Timelock.");
+        require(delay_ >= MINIMUM_DELAY, "Timelock::setDelay: Delay must exceed minimum delay.");
+        require(delay_ <= MAXIMUM_DELAY, "Timelock::setDelay: Delay must not exceed maximum delay.");
+        delay = delay_;
+
+        emit NewDelay(delay);
+    }
+
     function acceptAdmin() public {
         require(msg.sender == pendingAdmin, "Timelock::acceptAdmin: Call must come from pendingAdmin.");
         admin = msg.sender;
@@ -102,9 +112,9 @@ contract Timelock {
         require(user_delay >= delay, "Timelock::queueTransaction: Delay must exceed required delay.");
 
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, user_delay));
-        LockedTx memory new_tx = LockedTx(target, value, signature, data, user_delay, true);
         
-        queuedTx[txHash] = new_tx;
+        
+        queuedTx[txHash] = LockedTx(target, value, signature, data, user_delay, true);
 
         
         //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,9 +138,6 @@ contract Timelock {
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-        
-
-        emit QueueTransaction(txHash, target, value, signature, data, user_delay);
         return txHash;
     }
 
