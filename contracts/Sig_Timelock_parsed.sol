@@ -2,7 +2,7 @@ pragma solidity ^0.6.9;
 
 import "./SafeMath.sol";
 
-contract Timelock {
+contract Sig_Timelock {
     using SafeMath for uint;
 
     event NewAdmin(address indexed newAdmin);

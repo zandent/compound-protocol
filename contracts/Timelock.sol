@@ -19,6 +19,7 @@ contract Timelock {
     address public admin;
     address public pendingAdmin;
     uint public delay;
+    uint public LastestTxTimestamp;
 
     mapping (bytes32 => bool) public queuedTransactions;
 
@@ -29,6 +30,7 @@ contract Timelock {
 
         admin = admin_;
         delay = delay_;
+        LastestTxTimestamp = block.timestamp;
     }
 
     fallback() external payable { }
@@ -84,7 +86,7 @@ contract Timelock {
         require(queuedTransactions[txHash], "Timelock::executeTransaction: Transaction hasn't been queued.");
         require(getBlockTimestamp() >= eta, "Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
         require(getBlockTimestamp() <= eta.add(GRACE_PERIOD), "Timelock::executeTransaction: Transaction is stale.");
-
+        LastestTxTimestamp = getBlockTimestamp();
         queuedTransactions[txHash] = false;
 
         bytes memory callData;
